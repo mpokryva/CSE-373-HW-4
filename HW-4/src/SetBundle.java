@@ -17,6 +17,10 @@ public class SetBundle {
         return sets;
     }
 
+    public HashSet<Integer> getSet(int i) {
+        return sets.get(i);
+    }
+
     public int getSetCount() {
         return sets.size();
     }

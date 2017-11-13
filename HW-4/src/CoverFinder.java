@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Miki on 11/10/2017.
@@ -11,6 +8,7 @@ public class CoverFinder {
     private SetBundle bundle;
     private List<HashSet<Integer>> currentCover;
     private boolean isFinished;
+    int count = 0;
 
     public CoverFinder(SetBundle bundle) {
         this.bundle = bundle;
@@ -18,12 +16,15 @@ public class CoverFinder {
 
     public List<HashSet<Integer>> find() {
         bundle.sort();
-        return find(new boolean[bundle.getSetCount()], 0, 0);
+        find(new boolean[bundle.getSetCount()], 0);
+        System.out.println("NUM OF CALLS: " + count);
+        return currentCover;
     }
 
-    private List<HashSet<Integer>> find(boolean[] arr, int n, int numSubsets) {
-        if (currentCover != null && numSubsets >= currentCover.size()) { // Prune searches which are already >= than current best.
-            return currentCover;
+    private void find(boolean[] arr, int n) {
+        count++;
+        if (currentCover != null && trueCount(arr) >= currentCover.size()) { // Prune searches which are already >= than current best.
+            return;
         }
         if (n == arr.length) {
             List<HashSet<Integer>> subset = makeSet(arr);
@@ -36,11 +37,9 @@ public class CoverFinder {
             candidates[1] = true;
             for (int i = 0; i < candidates.length; i++) {
                 arr[n] = candidates[i];
-                int incr = (candidates[i]) ? 1 : 0;
-                find(arr, n + 1, numSubsets + incr);
+                find(arr, n + 1);
             }
         }
-        return currentCover;
     }
 
     private List<HashSet<Integer>> makeSet(boolean[] arr) {
@@ -51,6 +50,14 @@ public class CoverFinder {
             }
         }
         return subset;
+    }
+
+    private int trueCount(boolean[] arr) {
+        int count = 0;
+        for (int i = 0; i < arr.length; i++) {
+            count = (arr[i]) ? count + 1 : count;
+        }
+        return count;
     }
 
     private boolean isCover(List<HashSet<Integer>> sets) {

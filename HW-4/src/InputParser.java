@@ -22,8 +22,10 @@ public class InputParser {
                 current = current.trim();
                 HashSet<Integer> set = new HashSet<>();
                 String[] elements = current.split(" ");
-                for (int i = 0; i < elements.length; i++) {
-                    set.add(Integer.parseInt(elements[i]));
+                if (!elements[0].equals("")) {
+                    for (int i = 0; i < elements.length; i++) {
+                        set.add(Integer.parseInt(elements[i]));
+                    }
                 }
                 sets.add(set);
             }
@@ -61,8 +63,9 @@ public class InputParser {
         CoverFinder coverFinder = new CoverFinder(bundle);
 //        List<List<HashSet<Integer>>> powerSet = coverFinder.getPowerSet();
 //        InputParser.printPowerSet(powerSet);
-        SetBundle.printSets(coverFinder.find()); // 5 is arbitrary.
-        System.out.println("MINIMUM COVER in " + (double)(System.currentTimeMillis() - startTime) / 1000  + " seconds");
+        List<HashSet<Integer>> cover = coverFinder.find();
+        SetBundle.printSets(cover); // 5 is arbitrary.
+        System.out.println("MINIMUM COVER of size " +  cover.size() + "  in  " + (double)(System.currentTimeMillis() - startTime) / 1000  + " seconds");
 
     }
 
