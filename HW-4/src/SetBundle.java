@@ -5,49 +5,51 @@ import java.util.*;
  */
 public class SetBundle {
 
-    private List<HashSet<Integer>> sets;
-    private int universalSetSize;
+    private boolean[][] sets;
 
-    public SetBundle(List<HashSet<Integer>> sets, int universalSetSize) {
+    public SetBundle(boolean[][] sets) {
         this.sets = sets;
-        this.universalSetSize = universalSetSize;
     }
 
-    public List<HashSet<Integer>> getSets() {
+    public boolean[][] getSets() {
         return sets;
     }
 
-    public HashSet<Integer> getSet(int i) {
-        return sets.get(i);
+    public boolean[] getSet(int i) {
+        return sets[i];
     }
 
     public int getSetCount() {
-        return sets.size();
+        return sets.length;
     }
 
     public int getUniversalSetSize() {
-        return universalSetSize;
+        if (sets == null) {
+            return 0;
+        } else {
+            return sets[0].length;
+        }
     }
 
     public void sort() {
-        Collections.sort(sets, (HashSet<Integer> s1, HashSet<Integer> s2) -> s1.size() - s2.size());
+
     }
 
-        @Override
+    @Override
     public String toString() {
         String ret = "";
-        for (HashSet<Integer> set : sets) {
-            Integer[] arr = new Integer[set.size()];
-            Arrays.sort(set.toArray(arr));
-            for (Integer i : arr) {
-                ret += (i + " ");
+        for (int i = 0; i < sets.length; i++) {
+            for (int j = 0; j < sets[i].length; j++) {
+                if (sets[i][j]) {
+                    ret += j + " ";
+                }
             }
             ret += "\n";
         }
         return ret;
     }
 
-    public static void printSets(List<HashSet<Integer>> sets) {
-        System.out.print(new SetBundle(sets, 0));
+    public static void printSets(boolean[][] sets) {
+        System.out.print(new SetBundle(sets));
     }
 }

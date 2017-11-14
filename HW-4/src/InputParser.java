@@ -16,20 +16,23 @@ public class InputParser {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
             int universalSetSize = Integer.parseInt(reader.readLine().trim());
             int subsetCount = Integer.parseInt(reader.readLine().trim());
-            List<HashSet<Integer>> sets = new ArrayList<>(subsetCount);
+            boolean[][] sets = new boolean[subsetCount][universalSetSize + 1]; // first entry is sentinel
             String current;
+            int row = 0;
             while ((current = reader.readLine()) != null) {
                 current = current.trim();
-                HashSet<Integer> set = new HashSet<>();
                 String[] elements = current.split(" ");
                 if (!elements[0].equals("")) {
                     for (int i = 0; i < elements.length; i++) {
-                        set.add(Integer.parseInt(elements[i]));
+                        int col = Integer.parseInt(elements[i]);
+                        sets[row][col] = true;
                     }
                 }
-                sets.add(set);
+                row++;
             }
-            return new SetBundle(sets, universalSetSize);
+            SetBundle ret = new SetBundle(sets);
+            System.out.println(ret);
+            return ret;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -60,12 +63,10 @@ public class InputParser {
         SetBundle bundle = new InputParser().parse(args[0]);
         System.out.println(bundle);
         System.out.println("--------------------------");
-        CoverFinder coverFinder = new CoverFinder(bundle);
-//        List<List<HashSet<Integer>>> powerSet = coverFinder.getPowerSet();
-//        InputParser.printPowerSet(powerSet);
-        List<HashSet<Integer>> cover = coverFinder.find();
-        SetBundle.printSets(cover); // 5 is arbitrary.
-        System.out.println("MINIMUM COVER of size " +  cover.size() + "  in  " + (double)(System.currentTimeMillis() - startTime) / 1000  + " seconds");
+//        CoverFinder coverFinder = new CoverFinder(bundle);
+//        SetBundle cover = coverFinder.find();
+//        System.out.println(cover);
+//        System.out.println("MINIMUM COVER of size " +  cover.size() + "  in  " + (double)(System.currentTimeMillis() - startTime) / 1000  + " seconds");
 
     }
 
