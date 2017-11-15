@@ -11,12 +11,12 @@ import java.util.List;
  */
 public class InputParser {
 
-    private SetBundle parse(String fileName) {
+    private boolean[][] parse(String fileName) {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
             int universalSetSize = Integer.parseInt(reader.readLine().trim());
             int subsetCount = Integer.parseInt(reader.readLine().trim());
-            boolean[][] sets = new boolean[subsetCount][universalSetSize + 1]; // first entry is sentinel
+            boolean[][] sets = new boolean[subsetCount][universalSetSize]; // first entry is sentinel
             String current;
             int row = 0;
             while ((current = reader.readLine()) != null) {
@@ -24,15 +24,13 @@ public class InputParser {
                 String[] elements = current.split(" ");
                 if (!elements[0].equals("")) {
                     for (int i = 0; i < elements.length; i++) {
-                        int col = Integer.parseInt(elements[i]);
+                        int col = Integer.parseInt(elements[i]) - 1;
                         sets[row][col] = true;
                     }
                 }
                 row++;
             }
-            SetBundle ret = new SetBundle(sets);
-            System.out.println(ret);
-            return ret;
+            return sets;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -60,13 +58,13 @@ public class InputParser {
 
     public static void main(String[] args) {
         long startTime = System.currentTimeMillis();
-        SetBundle bundle = new InputParser().parse(args[0]);
-        System.out.println(bundle);
-        System.out.println("--------------------------");
-//        CoverFinder coverFinder = new CoverFinder(bundle);
-//        SetBundle cover = coverFinder.find();
-//        System.out.println(cover);
-//        System.out.println("MINIMUM COVER of size " +  cover.size() + "  in  " + (double)(System.currentTimeMillis() - startTime) / 1000  + " seconds");
+        boolean[][] input = new InputParser().parse(args[0]);
+        PrintUtils.sets(input);
+        PrintUtils.dashDivider();
+        CoverFinder coverFinder = new CoverFinder(input);
+        boolean[][] cover = coverFinder.find();
+        PrintUtils.sets(cover);
+        System.out.println("MINIMUM COVER of size " +  cover.length + "  in  " + (double)(System.currentTimeMillis() - startTime) / 1000  + " seconds");
 
     }
 
