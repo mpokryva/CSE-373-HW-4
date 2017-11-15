@@ -6,12 +6,15 @@ import java.util.*;
 public class CoverFinder {
 
     private boolean[][] input;
-    private boolean[] currentCover;
-    private int currentCoverSize;
+    private int[] currentCover;
     private boolean isFinished;
     private final int subsetCount;
     private final int universalSetSize;
-    private boolean[] partialSol;
+    private static final int DNU = -1; // INVALID INDEX (DO NOT USE).
+    /*
+    The current partial solution. partialSol[i] holds the row index (input[partialSol[i]]), for the ith element of the solution.
+     */
+    private int[] partialSol;
     int count = 0;
 
     public CoverFinder(boolean[][] input) {
@@ -31,32 +34,29 @@ public class CoverFinder {
 
     public boolean[][] find() {
 //        sort(input);
-        partialSol = new boolean[input.length];
-        find(0, 0);
+        partialSol = new int[subsetCount];
+        find(0);
         System.out.println("NUM OF CALLS: " + count);
-        return makeSet(currentCover, subsetCount, currentCoverSize);
+        return makeSet(currentCover, currentCover.length);
     }
 
-    private void find(int n, int numSubsets) {
+    private void find(int n) {
         count++;
-//        SetBundle current = makeSet(partialSol, n);
-        if (isASolution(n)) {
-            if (isCover(partialSol, n) && (currentCover == null || numSubsets < currentCoverSize)) {
-                currentCover = (currentCover == null) ? new boolean[partialSol.length] : currentCover;
-                System.arraycopy(partialSol, 0, currentCover, 0, partialSol.length);
-                currentCoverSize = numSubsets;
-            }
-        } else if (shouldPrune(n, numSubsets)) {
+//        if (isASolution(n)) {
+        if (isCover(n) && (currentCover == null || n < currentCover.length)) {
+            currentCover = new int[n];
+            System.arraycopy(partialSol, 0, currentCover, 0, n);
+//            }
+        } else if (n > 0 && shouldPrune(n)) {
             return;
         } else {
-            boolean[] candidates = new boolean[2];
-            candidates[0] = false;
-            candidates[1] = true;
+            int[] candidates = constructCandidates(n); // holds potential partialSol indices for the nth subset.
             for (int i = 0; i < candidates.length; i++) {
                 partialSol[n] = candidates[i];
                 makeMove(n);
-                int incr = (partialSol[n]) ? 1 : 0;
-                find(n + 1, numSubsets + incr);
+//                int incr = (partialSol[n]) ? 1 : 0;
+                find(n + 1);
+//                partialSol[n] = 0;
                 unmakeMove(n);
             }
         }
@@ -66,32 +66,32 @@ public class CoverFinder {
         return n == partialSol.length;
     }
 
-    private boolean shouldPrune(int n, int numSubsets) {
+    private boolean shouldPrune(int n) {
         boolean ret = false;
-        if (currentCover != null && numSubsets >= currentCoverSize) { // Prune searches which are already >= than current best.
+        if (currentCover != null && n >= currentCover.length) { // Prune searches which are already >= than current best.
             ret = true;
-        } else if (currentCover != null && getDiff(n - 1, n) == 0) {
-            ret =true;
-        } else if (currentCover != null && hasSubsetOf(n - 1, n)) {
+        } else if (currentCover != null && (getDiff(n - 1, n) == 0)) {
+            ret = true;
+        } else if (currentCover != null && (hasSubsetOf(n - 1, n))) {
             ret = true;
         }
         return ret;
     }
 
     /*
-    1) Fill set with all indices that correspond to false values.
-    2) For 1) from i = 0 to set.length:
-            if set has useful element: it is a candidate
+    Returns an array of possible candidates for partialSol[n].
+    A set is a candidate if:
+        1) It has not yet been used.
+        2) It contains a useful element(s) (diff from union of sets in partialSol is not empty).
 
      */
     private int[] constructCandidates(int n) {
-        LinkedList<Integer> cands = new LinkedList<>();
-        for (int i = 0; i < n; i++) {
-            if (!partialSol[i]) {
-                if (getDiff(i, n) != 0) {
-                    cands.add(i);
-                }
-            }
+        HashSet<Integer> cands = new HashSet<>();
+        for (int i = 0; i < subsetCount; i++) {
+            cands.add(i);
+        }
+        for (int i = 0; i < n; i++) { // Remove currently used sets in partialSol.
+            cands.remove(partialSol[i]);
         }
         int[] ret = new int[cands.size()];
         Iterator<Integer> it = cands.iterator();
@@ -118,15 +118,13 @@ public class CoverFinder {
      * @return
      */
     private int getDiff(int pos, int n) {
-        if (!partialSol[pos]) {
-            return -1;
-        }
         int diff = 0;
-        boolean oldValue = partialSol[pos];
-        partialSol[pos] = false;
-        boolean[] union = getUnion(partialSol, n);
+        int oldValue = partialSol[pos];
+        partialSol[pos] = DNU;
+        boolean[] union = getUnion(n);
         partialSol[pos] = oldValue;
-        boolean[] set = input[pos];
+        int row = partialSol[pos];
+        boolean[] set = input[row];
         for (int i = 0; i < set.length; i++) {
             int incr = (set[i] && !union[i]) ? 1 : 0;
             diff += incr;
@@ -142,9 +140,6 @@ public class CoverFinder {
      * @return
      */
     private boolean hasSubsetOf(int pos, int n) {
-        if (!partialSol[pos]) {
-            return false;
-        }
         for (int i = 0; i < n; i++) {
             if (pos != i && isSubsetOf(i, pos)) {
                 return true;
@@ -161,11 +156,13 @@ public class CoverFinder {
      * @return
      */
     private boolean isSubsetOf(int first, int second) {
-        if (!partialSol[first] || !partialSol[second]) {
-            return false;
-        }
-        for (int i = 0; i < input.length; i++) {
-            if (input[first][i] && !input[second][i]) {
+//        if (!partialSol[first] || !partialSol[second]) {
+//            return false;
+//        }
+        for (int i = 0; i < universalSetSize; i++) {
+            int firstRow = partialSol[first];
+            int secondRow = partialSol[second];
+            if (input[firstRow][i] && !input[secondRow][i]) {
                 return false;
             }
         }
@@ -176,24 +173,23 @@ public class CoverFinder {
     /**
      * Returns a set representing the current solution.
      *
-     * @param partialSol
+     * @param sol
      * @param n
      * @return
      */
-    private boolean[][] makeSet(boolean[] partialSol, int n, int numSubsets) {
-        boolean[][] ret = new boolean[numSubsets][universalSetSize];
+    private boolean[][] makeSet(int[] sol, int n) {
+        boolean[][] ret = new boolean[n][universalSetSize];
         int r = 0;
-        for (int i = 0; i < partialSol.length; i++) { // Row
-            if (partialSol[i]) {
-                System.arraycopy(input[i], 0, ret[r], 0, input[i].length);
-                r++;
-            }
+        for (int i = 0; i < n; i++) { // Row
+            int row = sol[i];
+            System.arraycopy(input[row], 0, ret[r], 0, input[i].length);
+            r++;
         }
         return ret;
     }
 
-    private boolean isCover(boolean[] partialSol, int n) {
-        boolean[] union = getUnion(partialSol, n);
+    private boolean isCover(int n) {
+        boolean[] union = getUnion(n);
         return trueCount(union, union.length) == universalSetSize;
     }
 
@@ -207,12 +203,13 @@ public class CoverFinder {
         return count;
     }
 
-    private boolean[] getUnion(boolean[] partialSol, int n) {
+    private boolean[] getUnion(int n) {
         boolean[] universalSet = new boolean[universalSetSize];
-        for (int i = 0; i < n; i++) { // Row.
-            if (partialSol[i]) {
+        for (int i = 0; i < n; i++) {
+            int row = partialSol[i];
+            if (row != DNU) {
                 for (int j = 0; j < universalSetSize; j++) { // Col.
-                    if (input[i][j]) {
+                    if (input[row][j]) {
                         universalSet[j] = true;
                     }
                 }
