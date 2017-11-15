@@ -1,5 +1,4 @@
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Miki on 11/10/2017.
@@ -41,17 +40,13 @@ public class CoverFinder {
     private void find(int n, int numSubsets) {
         count++;
 //        SetBundle current = makeSet(partialSol, n);
-        if (n == partialSol.length) {
+        if (isASolution(n)) {
             if (isCover(partialSol, n) && (currentCover == null || numSubsets < currentCoverSize)) {
                 currentCover = (currentCover == null) ? new boolean[partialSol.length] : currentCover;
                 System.arraycopy(partialSol, 0, currentCover, 0, partialSol.length);
                 currentCoverSize = numSubsets;
             }
-        } else if (currentCover != null && numSubsets >= currentCoverSize) { // Prune searches which are already >= than current best.
-            return;
-        } else if (currentCover != null && getDiff(n - 1, n) == 0) {
-            return;
-        } else if (currentCover != null && hasSubsetOf(n-1, n)) {
+        } else if (shouldPrune(n, numSubsets)) {
             return;
         } else {
             boolean[] candidates = new boolean[2];
@@ -59,10 +54,61 @@ public class CoverFinder {
             candidates[1] = true;
             for (int i = 0; i < candidates.length; i++) {
                 partialSol[n] = candidates[i];
+                makeMove(n);
                 int incr = (partialSol[n]) ? 1 : 0;
                 find(n + 1, numSubsets + incr);
+                unmakeMove(n);
             }
         }
+    }
+
+    private boolean isASolution(int n) {
+        return n == partialSol.length;
+    }
+
+    private boolean shouldPrune(int n, int numSubsets) {
+        boolean ret = false;
+        if (currentCover != null && numSubsets >= currentCoverSize) { // Prune searches which are already >= than current best.
+            ret = true;
+        } else if (currentCover != null && getDiff(n - 1, n) == 0) {
+            ret =true;
+        } else if (currentCover != null && hasSubsetOf(n - 1, n)) {
+            ret = true;
+        }
+        return ret;
+    }
+
+    /*
+    1) Fill set with all indices that correspond to false values.
+    2) For 1) from i = 0 to set.length:
+            if set has useful element: it is a candidate
+
+     */
+    private int[] constructCandidates(int n) {
+        LinkedList<Integer> cands = new LinkedList<>();
+        for (int i = 0; i < n; i++) {
+            if (!partialSol[i]) {
+                if (getDiff(i, n) != 0) {
+                    cands.add(i);
+                }
+            }
+        }
+        int[] ret = new int[cands.size()];
+        Iterator<Integer> it = cands.iterator();
+        int i = 0;
+        while (it.hasNext()) {
+            ret[i] = it.next();
+            i++;
+        }
+        return ret;
+    }
+
+    private void makeMove(int n) {
+
+    }
+
+    private void unmakeMove(int n) {
+
     }
 
 
