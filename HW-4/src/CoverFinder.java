@@ -1,3 +1,6 @@
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by Miki on 11/10/2017.
  */
@@ -18,8 +21,17 @@ public class CoverFinder {
         universalSetSize = input[0].length;
     }
 
+//    private void sort(boolean[][] input) {
+//        int[] numElements = new int[subsetCount];
+//        for (int i = 0; i < numElements.length; i++) {
+//            numElements[i] = trueCount(input[i], input[i].length);
+//        }
+//
+//        return;
+//    }
+
     public boolean[][] find() {
-//        input.sort();
+//        sort(input);
         partialSol = new boolean[input.length];
         find(0, 0);
         System.out.println("NUM OF CALLS: " + count);
@@ -39,6 +51,8 @@ public class CoverFinder {
             return;
         } else if (currentCover != null && getDiff(n - 1, n) == 0) {
             return;
+        } else if (currentCover != null && hasSubsetOf(n-1, n)) {
+            return;
         } else {
             boolean[] candidates = new boolean[2];
             candidates[0] = false;
@@ -54,6 +68,7 @@ public class CoverFinder {
 
     /**
      * Returns the number of unique elements the specified set has in comparison to the union of the partial solution.
+     *
      * @return
      */
     private int getDiff(int pos, int n) {
@@ -71,6 +86,44 @@ public class CoverFinder {
             diff += incr;
         }
         return diff;
+    }
+
+    /**
+     * Returns true if any subsets of partialSol[pos] exist.
+     *
+     * @param pos
+     * @param n
+     * @return
+     */
+    private boolean hasSubsetOf(int pos, int n) {
+        if (!partialSol[pos]) {
+            return false;
+        }
+        for (int i = 0; i < n; i++) {
+            if (pos != i && isSubsetOf(i, pos)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if partialSol[first] is a subset of partialSol[second]
+     *
+     * @param first
+     * @param second
+     * @return
+     */
+    private boolean isSubsetOf(int first, int second) {
+        if (!partialSol[first] || !partialSol[second]) {
+            return false;
+        }
+        for (int i = 0; i < input.length; i++) {
+            if (input[first][i] && !input[second][i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
 
@@ -121,32 +174,5 @@ public class CoverFinder {
         }
         return universalSet;
     }
-
-
-//    public List<List<HashSet<Integer>>> getPowerSet() {
-//        return getPowerSet(new ArrayList<>(), new boolean[input.getSetCount()], 0);
-//    }
-//
-//    private List<List<HashSet<Integer>>> getPowerSet(List<List<HashSet<Integer>>> powerSet, boolean[] arr, int n) {
-//        if (n == arr.length) {
-//            List<HashSet<Integer>> subset = new ArrayList<>();
-//            for (int i = 0; i < arr.length; i++) {
-//                if (arr[i]) {
-//                    subset.add(input.getSets().get(i));
-//                }
-//            }
-//            powerSet.add(subset);
-//        } else {
-//            boolean[] candidates = new boolean[2];
-//            candidates[0] = false;
-//            candidates[1] = true;
-//            for (int i = 0; i < candidates.length; i++) {
-//                arr[n] = candidates[i];
-//                getPowerSet(powerSet, arr, n + 1);
-//            }
-//        }
-//        return powerSet;
-//    }
-
 
 }

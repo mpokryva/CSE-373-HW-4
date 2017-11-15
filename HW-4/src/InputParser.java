@@ -56,6 +56,8 @@ public class InputParser {
     }
 
 
+
+
     public static void main(String[] args) {
         long startTime = System.currentTimeMillis();
         boolean[][] input = new InputParser().parse(args[0]);
@@ -65,7 +67,6 @@ public class InputParser {
         boolean[][] cover = coverFinder.find();
         PrintUtils.sets(cover);
         System.out.println("MINIMUM COVER of size " +  cover.length + "  in  " + (double)(System.currentTimeMillis() - startTime) / 1000  + " seconds");
-
     }
 
 
