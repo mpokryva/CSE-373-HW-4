@@ -43,7 +43,7 @@ public class CoverFinder {
     private void find(int n) {
         count++;
 //        if (isASolution(n)) {
-        if (isCover(n) && (currentCover == null || n < currentCover.length)) {
+        if (isASolution(n)) {
             currentCover = new int[n];
             System.arraycopy(partialSol, 0, currentCover, 0, n);
 //            }
@@ -63,7 +63,7 @@ public class CoverFinder {
     }
 
     private boolean isASolution(int n) {
-        return n == partialSol.length;
+        return isCover(n) && (currentCover == null || n < currentCover.length);
     }
 
     private boolean shouldPrune(int n) {
