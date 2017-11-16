@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -7,10 +8,9 @@ public class CoverFinder {
 
     private boolean[][] input;
     private int[] currentCover;
-    private boolean isFinished;
     private final int subsetCount;
     private final int universalSetSize;
-    private static final int DNU = -1; // INVALID INDEX (DO NOT USE).
+    private static final int DNU = -1; // INVALID INDEX (DNU = DO NOT USE).
     /*
     The current partial solution. partialSol[i] holds the row index (input[partialSol[i]]), for the ith element of the solution.
      */
@@ -23,15 +23,6 @@ public class CoverFinder {
         universalSetSize = input[0].length;
     }
 
-//    private void sort(boolean[][] input) {
-//        int[] numElements = new int[subsetCount];
-//        for (int i = 0; i < numElements.length; i++) {
-//            numElements[i] = trueCount(input[i], input[i].length);
-//        }
-//
-//        return;
-//    }
-
     public boolean[][] find() {
 //        sort(input);
         partialSol = new int[subsetCount];
@@ -42,37 +33,43 @@ public class CoverFinder {
 
     private void find(int n) {
         count++;
-//        if (isASolution(n)) {
         if (isASolution(n)) {
             currentCover = new int[n];
             System.arraycopy(partialSol, 0, currentCover, 0, n);
-//            }
         } else if (n > 0 && shouldPrune(n)) {
             return;
         } else {
             int[] candidates = constructCandidates(n); // holds potential partialSol indices for the nth subset.
-            for (int i = 0; i < candidates.length; i++) {
+            int stoppingIndex = getStoppingIndex(candidates.length);
+            for (int i = 0; i < stoppingIndex; i++) {
                 partialSol[n] = candidates[i];
                 makeMove(n);
 //                int incr = (partialSol[n]) ? 1 : 0;
                 find(n + 1);
 //                partialSol[n] = 0;
                 unmakeMove(n);
+                stoppingIndex = getStoppingIndex(candidates.length);
             }
         }
     }
 
+    private int getStoppingIndex(int numCandidates) {
+        int stoppingIndex = (currentCover != null) ? currentCover.length : numCandidates;
+        stoppingIndex = (stoppingIndex > numCandidates) ? numCandidates : stoppingIndex;
+        return stoppingIndex;
+    }
+
     private boolean isASolution(int n) {
-        return isCover(n) && (currentCover == null || n < currentCover.length);
+        return (currentCover == null || n < currentCover.length) && isCover(n);
     }
 
     private boolean shouldPrune(int n) {
         boolean ret = false;
         if (currentCover != null && n >= currentCover.length) { // Prune searches which are already >= than current best.
             ret = true;
-        } else if (currentCover != null && (getDiff(n - 1, n) == 0)) {
+        } else if (currentCover != null && (getDiff(partialSol, n - 1, n) == 0)) { // Prune if doesn't contain any unique elements.
             ret = true;
-        } else if (currentCover != null && (hasSubsetOf(n - 1, n))) {
+        } else if (currentCover != null && (hasSubsetOf(n - 1, n))) { // Prune if has a useless set somewhere.
             ret = true;
         }
         return ret;
@@ -100,7 +97,7 @@ public class CoverFinder {
             ret[i] = it.next();
             i++;
         }
-        return ret;
+        return sortCandidates(ret, n);
     }
 
     private void makeMove(int n) {
@@ -117,13 +114,13 @@ public class CoverFinder {
      *
      * @return
      */
-    private int getDiff(int pos, int n) {
+    private int getDiff(int[] rows, int pos, int n) {
         int diff = 0;
-        int oldValue = partialSol[pos];
-        partialSol[pos] = DNU;
+        int oldValue = rows[pos];
+        rows[pos] = DNU;
         boolean[] union = getUnion(n);
-        partialSol[pos] = oldValue;
-        int row = partialSol[pos];
+        rows[pos] = oldValue;
+        int row = rows[pos];
         boolean[] set = input[row];
         for (int i = 0; i < set.length; i++) {
             int incr = (set[i] && !union[i]) ? 1 : 0;
@@ -216,6 +213,35 @@ public class CoverFinder {
             }
         }
         return universalSet;
+    }
+
+    private int[] sortCandidates(int[] cands, int n) {
+        List<Candidate> candsList = new ArrayList<>(cands.length);
+        for (int i = 0; i < cands.length; i++) {
+            candsList.add(new Candidate(cands[i], -1 * getDiff(cands, i, n)));
+        }
+        Collections.sort(candsList);
+        int[] ret = new int[candsList.size()];
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = candsList.get(i).candIndex;
+        }
+        return ret;
+    }
+
+    class Candidate implements Comparable<Candidate> {
+        private int candIndex;
+        private int priority;
+
+        Candidate(int candIndex, int priority) {
+            this.candIndex = candIndex;
+            this.priority = priority;
+        }
+
+        @Override
+        public int compareTo(Candidate other) {
+            return priority - other.priority;
+        }
+
     }
 
 }
