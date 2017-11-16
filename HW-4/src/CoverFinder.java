@@ -230,7 +230,7 @@ public class CoverFinder {
     }
 
     private boolean isCover(int n) {
-        boolean[] union = getUnion(n);
+        boolean[] union = getUnion1(n);
         return trueCount(union, union.length) == universalSetSize;
     }
 
