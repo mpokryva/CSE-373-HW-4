@@ -12,11 +12,14 @@ public class CoverFinder {
     private final int subsetCount;
     private final int universalSetSize;
     private static final int DNU = -1; // INVALID INDEX (DNU = DO NOT USE).
+    private int[] includedElements;
+    private int includedCount;
+    private boolean[] boolIncluded;
     /*
     The current partial solution. partialSol[i] holds the row index (input[partialSol[i]]), for the ith element of the solution.
      */
     private int[] partialSol;
-    int count = 0;
+    private int count = 0;
 
     public CoverFinder(boolean[][] input) {
         this.input = input;
@@ -32,6 +35,9 @@ public class CoverFinder {
         }
         subsetCount = input.length;
         universalSetSize = input[0].length;
+        includedElements = new int[universalSetSize];
+        boolIncluded = new boolean[universalSetSize];
+        includedCount = 0;
     }
 
     public boolean[][] find() {
@@ -71,7 +77,7 @@ public class CoverFinder {
     }
 
     private boolean isASolution(int n) {
-        return (currentCover == null || n < currentCover.length) && isCover(n);
+        return (currentCover == null || n < currentCover.length) && isCover1(n);
     }
 
     private boolean shouldPrune(int n) {
@@ -142,14 +148,29 @@ public class CoverFinder {
     }
 
     private void makeMove(int n) {
-
+        // add variables in partialSol[n] to includedElements array
+        int rowIndex = partialSol[n];
+        List<Integer> row = sparseInput.get(rowIndex);
+        for (int i = 0; i < row.size(); i++) {
+            if (includedElements[row.get(i)] == 0) {
+                includedCount++;
+                boolIncluded[row.get(i)] = true;
+            }
+            includedElements[row.get(i)]++;
+        }
     }
 
     private void unmakeMove(int n) {
-
+        int rowIndex = partialSol[n];
+        List<Integer> row = sparseInput.get(rowIndex);
+        for (int i = 0; i < row.size(); i++) {
+            includedElements[row.get(i)]--;
+            if (includedElements[row.get(i)] == 0) {
+                boolIncluded[row.get(i)] = false;
+                includedCount--;
+            }
+        }
     }
-
-
     /**
      * Returns the number of unique elements the specified set has in comparison to the union of the partial solution.
      *
@@ -159,7 +180,10 @@ public class CoverFinder {
         int diff = 0;
         int oldValue = rows[pos];
         rows[pos] = DNU;
-        boolean[] union = getUnion(n);
+        rows[pos] = oldValue;
+        unmakeMove(pos);
+        boolean[] union = getUnion3();
+        makeMove(pos);
         rows[pos] = oldValue;
         int row = rows[pos];
         if (row == DNU) {
@@ -234,6 +258,10 @@ public class CoverFinder {
         return trueCount(union, union.length) == universalSetSize;
     }
 
+    private boolean isCover1(int n) {
+        return includedCount == universalSetSize;
+    }
+
     private int trueCount(boolean[] partialSol, int n) {
         int count = 0;
         for (int i = 0; i < n; i++) {
@@ -271,6 +299,21 @@ public class CoverFinder {
             }
         }
         return universalSet;
+    }
+
+    private boolean[] getUnion2(int n) {
+        boolean[] union = new boolean[includedElements.length];
+        for (int i = 0; i < union.length; i++) {
+            union[i] = includedElements[i] > 0;
+        }
+        return union;
+//        return boolIncluded;
+    }
+
+    private boolean[] getUnion3() {
+        boolean[] ret = new boolean[boolIncluded.length];
+        System.arraycopy(boolIncluded, 0, ret, 0, boolIncluded.length);
+        return ret;
     }
 
     private int[] sortCandidates(int[] cands, int n) {
