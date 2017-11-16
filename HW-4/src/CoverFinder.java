@@ -7,6 +7,7 @@ import java.util.*;
 public class CoverFinder {
 
     private boolean[][] input;
+    private List<List<Integer>> sparseInput;
     private int[] currentCover;
     private final int subsetCount;
     private final int universalSetSize;
@@ -19,6 +20,16 @@ public class CoverFinder {
 
     public CoverFinder(boolean[][] input) {
         this.input = input;
+        sparseInput = new ArrayList<>();
+        for (int i = 0; i < input.length; i++) {
+            ArrayList<Integer> list = new ArrayList<>();
+            for (int j = 0; j < input[i].length; j++) {
+                if (input[i][j]) {
+                    list.add(j);
+                }
+            }
+            sparseInput.add(list);
+        }
         subsetCount = input.length;
         universalSetSize = input[0].length;
     }
@@ -39,7 +50,7 @@ public class CoverFinder {
         } else if (n > 0 && shouldPrune(n)) {
             return;
         } else {
-            int[] candidates = constructCandidates(n); // holds potential partialSol indices for the nth subset.
+            int[] candidates = constructCandidates1(n); // holds potential partialSol indices for the nth subset.
             int stoppingIndex = getStoppingIndex(candidates.length);
             for (int i = 0; i < stoppingIndex; i++) {
                 partialSol[n] = candidates[i];
@@ -82,6 +93,36 @@ public class CoverFinder {
         2) It contains a useful element(s) (diff from union of sets in partialSol is not empty).
 
      */
+    private int[] constructCandidates1(int n) {
+        int cands[] = new int[subsetCount];
+        for (int i = 0; i < subsetCount; i++) {
+            cands[i] = i;
+        }
+        for (int i = 0; i < n; i++) { // Remove currently used sets in partialSol.
+            cands[partialSol[i]] = DNU;
+        }
+        for (int i = 0; i < n; i++) {
+            if (getDiff(cands, i, n) == 0) {
+                cands[i] = DNU;
+            }
+        }
+        int dnuCount = 0;
+        for (int i = 0; i < cands.length; i++) {
+            if (cands[i] == DNU) {
+                dnuCount++;
+            }
+        }
+        int[] ret = new int[cands.length - dnuCount];
+        int retIndex = 0;
+        for (int i = 0; i < cands.length; i++) {
+            if (cands[i] != DNU) {
+                ret[retIndex] = i;
+                retIndex++;
+            }
+        }
+        return sortCandidates(ret, n);
+    }
+
     private int[] constructCandidates(int n) {
         HashSet<Integer> cands = new HashSet<>();
         for (int i = 0; i < subsetCount; i++) {
@@ -121,6 +162,9 @@ public class CoverFinder {
         boolean[] union = getUnion(n);
         rows[pos] = oldValue;
         int row = rows[pos];
+        if (row == DNU) {
+            return -1;
+        }
         boolean[] set = input[row];
         for (int i = 0; i < set.length; i++) {
             int incr = (set[i] && !union[i]) ? 1 : 0;
@@ -209,6 +253,20 @@ public class CoverFinder {
                     if (input[row][j]) {
                         universalSet[j] = true;
                     }
+                }
+            }
+        }
+        return universalSet;
+    }
+
+    private boolean[] getUnion1(int n) {
+        boolean[] universalSet = new boolean[universalSetSize];
+        for (int i = 0; i < n; i++) {
+            int row = partialSol[i];
+            if (row != DNU) {
+                List<Integer> list = sparseInput.get(row);
+                for (int j = 0; j < list.size(); j++) {
+                    universalSet[list.get(j)] = true;
                 }
             }
         }
