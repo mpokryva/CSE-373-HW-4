@@ -16,7 +16,7 @@ public class InputParser {
             BufferedReader reader = new BufferedReader(new FileReader(fileName));
             int universalSetSize = Integer.parseInt(reader.readLine().trim());
             int subsetCount = Integer.parseInt(reader.readLine().trim());
-            boolean[][] sets = new boolean[subsetCount][universalSetSize]; // first entry is sentinel
+            boolean[][] sets = new boolean[subsetCount][universalSetSize];
             String current;
             int row = 0;
             while ((current = reader.readLine()) != null) {
